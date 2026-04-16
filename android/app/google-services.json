@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "105339821110",
+    "firebase_url": "https://embedded-project-32dca-default-rtdb.firebaseio.com",
+    "project_id": "embedded-project-32dca",
+    "storage_bucket": "embedded-project-32dca.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:105339821110:android:52d767af068c14e3ff8c97",
+        "android_client_info": {
+          "package_name": "com.example.irrigation_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLl1dtmvnF_WFgVOhhkVH24ClU1kM_utQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
