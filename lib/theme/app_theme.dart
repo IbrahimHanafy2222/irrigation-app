@@ -16,8 +16,7 @@ class AppTheme {
     colorScheme: ColorScheme.light(
       primary: greenBright,
       secondary: greenMid,
-      surface: Colors.white,
-      background: cream,
+      surface: cream,
     ),
     textTheme: const TextTheme(
       displayLarge: TextStyle(
