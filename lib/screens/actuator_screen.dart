@@ -119,18 +119,21 @@ class _PumpControlCardState extends State<_PumpControlCard> {
   // Optimistic local state — null means "follow Firebase value"
   bool? _localOverride;
 
-  void _togglePump(bool value) {
+  Future<void> _togglePump(bool value) async {
     setState(() => _localOverride = value);
     final newState = value ? 'ON' : 'OFF';
-    Future.wait([
-      FirebaseService.writePump(newState),
-      FirebaseDatabase.instance.ref('status/pump').set(newState), // optimistic status update
-    ]).catchError((e) {
+    try {
+      await Future.wait([
+        FirebaseService.writePump(newState),
+        FirebaseDatabase.instance.ref('status/pump').set(newState), // optimistic status update
+      ]);
+    } catch (e) {
       setState(() => _localOverride = null);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to update pump: $e')),
       );
-    });
+    }
   }
 
   @override
@@ -169,7 +172,7 @@ class _PumpControlCardState extends State<_PumpControlCard> {
                           color: Theme.of(context)
                               .colorScheme
                               .onSurface
-                              .withOpacity(0.45),
+                              .withValues(alpha: 0.45),
                         ),
                   ),
               ],
@@ -191,9 +194,17 @@ class _GantryControlCard extends StatefulWidget {
 
 class _GantryControlCardState extends State<_GantryControlCard> {
   double _sliderValue = 0;
+  bool _initialized = false;
 
-  void _moveGantry(double x) {
-    FirebaseService.writeGantryX(x.toInt());
+  Future<void> _moveGantry(double x) async {
+    try {
+      await FirebaseService.writeGantryX(x.toInt());
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to move gantry: $e')),
+      );
+    }
   }
 
   @override
@@ -212,8 +223,13 @@ class _GantryControlCardState extends State<_GantryControlCard> {
             StreamBuilder<int>(
               stream: FirebaseService.gantryX,
               builder: (context, snapshot) {
+                final x = snapshot.data ?? 0;
+                if (!_initialized && snapshot.hasData) {
+                  _initialized = true;
+                  _sliderValue = x.toDouble().clamp(0, 400);
+                }
                 return Text(
-                  'Current X: ${snapshot.data ?? 0}',
+                  'Current X: $x',
                   style: const TextStyle(fontSize: 16),
                 );
               },
@@ -232,7 +248,7 @@ class _GantryControlCardState extends State<_GantryControlCard> {
                     onChanged: widget.isManual
                         ? (v) => setState(() => _sliderValue = v)
                         : null,
-                    onChangeEnd: widget.isManual ? (v) => _moveGantry(v) : null,
+                    onChangeEnd: widget.isManual ? (v) { _moveGantry(v); } : null,
                   ),
                 ),
                 const Text('400mm', style: TextStyle(fontSize: 12)),
@@ -250,7 +266,7 @@ class _GantryControlCardState extends State<_GantryControlCard> {
                       color: Theme.of(context)
                           .colorScheme
                           .onSurface
-                          .withOpacity(0.45),
+                          .withValues(alpha: 0.45),
                     ),
               ),
             ],

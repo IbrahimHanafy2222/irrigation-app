@@ -19,9 +19,37 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {},
-        child: ListView(
+      body: Column(
+        children: [
+          StreamBuilder<bool>(
+            stream: FirebaseService.connected,
+            builder: (context, snap) {
+              final online = snap.data ?? true;
+              if (online) return const SizedBox.shrink();
+              return Container(
+                width: double.infinity,
+                color: Colors.amber.shade100,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.wifi_off, size: 16, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Offline — last data may be stale',
+                      style: TextStyle(
+                        color: Colors.orange.shade900,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {},
+              child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             // Section label
@@ -30,7 +58,7 @@ class DashboardScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.5),
               ),
             ),
             const SizedBox(height: 10),
@@ -42,8 +70,7 @@ class DashboardScreen extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
-              childAspectRatio:
-                  1.1, // Decreased from 1.4 to provide more vertical space
+              childAspectRatio: 1.0,
               children: [
                 SensorCard(
                   label: 'Soil moisture',
@@ -84,7 +111,7 @@ class DashboardScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.5),
               ),
             ),
             const SizedBox(height: 10),
@@ -104,15 +131,18 @@ class DashboardScreen extends StatelessWidget {
                     fontSize: 11,
                     color: Theme.of(
                       context,
-                    ).colorScheme.onSurface.withOpacity(0.4),
+                    ).colorScheme.onSurface.withValues(alpha:0.4),
                   ),
                   textAlign: TextAlign.center,
                 );
               },
             ),
           ],
-        ),
-      ),
+          ),   // ListView
+            ),     // RefreshIndicator
+          ),       // Expanded
+        ],         // Column children
+      ),           // Column
     );
   }
 }

@@ -91,17 +91,17 @@ class HomeScreen extends StatelessWidget {
             'AI-powered precision irrigation that monitors, decides, and acts — '
             'so your crops thrive with every drop.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withOpacity(0.6),
+                  color: Colors.white.withValues(alpha:0.6),
                 ),
           ),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: AppTheme.greenBright.withOpacity(0.2),
+              color: AppTheme.greenBright.withValues(alpha:0.2),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: AppTheme.greenLight.withOpacity(0.4),
+                color: AppTheme.greenLight.withValues(alpha:0.4),
                 width: 0.5,
               ),
             ),
@@ -154,7 +154,7 @@ class HomeScreen extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: AppTheme.greenDeep.withOpacity(0.07),
+                  color: AppTheme.greenDeep.withValues(alpha:0.07),
                   width: 0.5,
                 ),
               ),
@@ -205,7 +205,7 @@ class HomeScreen extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppTheme.greenDeep.withOpacity(0.07),
+          color: AppTheme.greenDeep.withValues(alpha:0.07),
           width: 0.5,
         ),
       ),

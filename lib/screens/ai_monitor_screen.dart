@@ -29,10 +29,7 @@ class AiMonitorScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withOpacity(0.5),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
             const SizedBox(height: 10),
@@ -47,7 +44,7 @@ class AiMonitorScreen extends StatelessWidget {
                           color: Theme.of(context)
                               .colorScheme
                               .onSurface
-                              .withOpacity(0.45),
+                              .withValues(alpha: 0.45),
                         ),
                   );
                 }
@@ -96,7 +93,7 @@ class AiMonitorScreen extends StatelessWidget {
                             color: Theme.of(context)
                                 .colorScheme
                                 .onSurface
-                                .withOpacity(0.55),
+                                .withValues(alpha: 0.55),
                           ),
                     ),
                   );
@@ -122,13 +119,17 @@ class _DetectionCard extends StatelessWidget {
     return Colors.red;
   }
 
-  String _updatedAgo(int? timestampMs) {
-    if (timestampMs == null) return '';
-    final diff = DateTime.now()
-        .difference(DateTime.fromMillisecondsSinceEpoch(timestampMs));
-    if (diff.inSeconds < 60) return 'Updated ${diff.inSeconds}s ago';
-    if (diff.inMinutes < 60) return 'Updated ${diff.inMinutes}m ago';
-    return 'Updated ${diff.inHours}h ago';
+  String _updatedAgo(String? timestamp) {
+    if (timestamp == null || timestamp.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(timestamp.replaceAll(' UTC', 'Z'));
+      final diff = DateTime.now().toUtc().difference(dt);
+      if (diff.inSeconds < 60) return 'Updated ${diff.inSeconds}s ago';
+      if (diff.inMinutes < 60) return 'Updated ${diff.inMinutes}m ago';
+      return 'Updated ${diff.inHours}h ago';
+    } catch (_) {
+      return timestamp;
+    }
   }
 
   @override
@@ -140,7 +141,7 @@ class _DetectionCard extends StatelessWidget {
         final plantClass = detection['class']?.toString() ?? 'None';
         final confidence = (detection['confidence'] as num?)?.toDouble() ?? 0.0;
         final imageUrl = detection['image_url']?.toString() ?? '';
-        final timestamp = detection['timestamp'] as int?;
+        final timestamp = detection['timestamp']?.toString();
 
         return Card(
           child: Padding(
@@ -163,7 +164,7 @@ class _DetectionCard extends StatelessWidget {
                               color: Theme.of(context)
                                   .colorScheme
                                   .onSurface
-                                  .withOpacity(0.45),
+                                  .withValues(alpha: 0.45),
                             ),
                       ),
                   ],
@@ -184,8 +185,8 @@ class _DetectionCard extends StatelessWidget {
                   )
                 else
                   const Center(
-                    child: Icon(Icons.camera_alt,
-                        size: 100, color: Colors.grey),
+                    child:
+                        Icon(Icons.camera_alt, size: 100, color: Colors.grey),
                   ),
                 const SizedBox(height: 16),
                 Text(
@@ -207,7 +208,7 @@ class _DetectionCard extends StatelessWidget {
                           valueColor: AlwaysStoppedAnimation<Color>(
                               _confidenceColor(confidence)),
                           backgroundColor:
-                              _confidenceColor(confidence).withOpacity(0.15),
+                              _confidenceColor(confidence).withValues(alpha: 0.15),
                         ),
                       ),
                     ),
@@ -240,11 +241,18 @@ class _ActiveProtocolCard extends StatefulWidget {
 }
 
 class _ActiveProtocolCardState extends State<_ActiveProtocolCard> {
-  Timer? _timer;
-  int _countdown = 0;
-  int? _lastGrace; // tracks last grace_remaining from Firebase to detect resets
+  Timer? _ticker;
   Map<String, dynamic> _protocol = {};
   late final StreamSubscription<Map<String, dynamic>> _protocolSub;
+
+  int get _countdown {
+    final deadlineMs = (_protocol['deadline_ms'] as num?)?.toInt();
+    if (deadlineMs == null) {
+      return (_protocol['grace_remaining'] as num?)?.toInt() ?? 0;
+    }
+    final remaining = deadlineMs - DateTime.now().millisecondsSinceEpoch;
+    return (remaining / 1000).ceil().clamp(0, 9999);
+  }
 
   @override
   void initState() {
@@ -252,26 +260,15 @@ class _ActiveProtocolCardState extends State<_ActiveProtocolCard> {
     _protocolSub = FirebaseService.activeProtocol.listen((protocol) {
       if (!mounted) return;
       final status = protocol['status']?.toString() ?? 'idle';
-      final grace = (protocol['grace_remaining'] as num?)?.toInt() ?? 0;
-
       setState(() => _protocol = protocol);
 
-      if (status == 'executing' && grace != _lastGrace) {
-        _lastGrace = grace;
-        _timer?.cancel();
-        setState(() => _countdown = grace);
-        _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-          if (!mounted) return;
-          if (_countdown > 0) {
-            setState(() => _countdown--);
-          } else {
-            _timer?.cancel();
-          }
+      if (status == 'executing') {
+        _ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
+          if (mounted) setState(() {});
         });
-      } else if (status != 'executing') {
-        _timer?.cancel();
-        _lastGrace = null;
-        if (_countdown != 0) setState(() => _countdown = 0);
+      } else {
+        _ticker?.cancel();
+        _ticker = null;
       }
     });
   }
@@ -279,7 +276,7 @@ class _ActiveProtocolCardState extends State<_ActiveProtocolCard> {
   @override
   void dispose() {
     _protocolSub.cancel();
-    _timer?.cancel();
+    _ticker?.cancel();
     super.dispose();
   }
 
@@ -288,11 +285,9 @@ class _ActiveProtocolCardState extends State<_ActiveProtocolCard> {
     final status = _protocol['status']?.toString() ?? 'idle';
     final isExecuting = status == 'executing';
     final zoneX = (_protocol['zone_x'] as num?)?.toInt() ?? 0;
-    final triggeredClass =
-        _protocol['triggered_class']?.toString() ?? '';
+    final triggeredClass = _protocol['triggered_class']?.toString() ?? '';
     final protocolDef = ProtocolDefinition.forClass(triggeredClass);
-    final suggestedPump =
-        _protocol['pump_state']?.toString() ?? 'ON';
+    final suggestedPump = _protocol['pump_state']?.toString() ?? 'ON';
 
     return StreamBuilder<String>(
       stream: FirebaseService.currentMode,
@@ -307,8 +302,7 @@ class _ActiveProtocolCardState extends State<_ActiveProtocolCard> {
               children: [
                 const Text(
                   'Active Protocol',
-                  style:
-                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const Divider(),
                 Text('Status: $status'),
@@ -325,7 +319,7 @@ class _ActiveProtocolCardState extends State<_ActiveProtocolCard> {
                       const Icon(Icons.timer_outlined, size: 16),
                       const SizedBox(width: 4),
                       Text(
-                        'Grace remaining: ${_countdown}s',
+                        'Time remaining: ${_countdown}s',
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium
@@ -335,12 +329,13 @@ class _ActiveProtocolCardState extends State<_ActiveProtocolCard> {
                   ),
                   const SizedBox(height: 6),
                   LinearProgressIndicator(
-                    value: _lastGrace != null && _lastGrace! > 0
-                        ? _countdown / _lastGrace!
-                        : 0,
+                    value: () {
+                      final total = (_protocol['grace_remaining'] as num?)?.toInt() ?? 1;
+                      return (_countdown / total).clamp(0.0, 1.0);
+                    }(),
                     valueColor:
                         AlwaysStoppedAnimation<Color>(AppTheme.greenBright),
-                    backgroundColor: AppTheme.greenBright.withOpacity(0.15),
+                    backgroundColor: AppTheme.greenBright.withValues(alpha: 0.15),
                   ),
                 ],
                 const SizedBox(height: 16),
@@ -379,7 +374,7 @@ class _ActiveProtocolCardState extends State<_ActiveProtocolCard> {
                             color: Theme.of(context)
                                 .colorScheme
                                 .onSurface
-                                .withOpacity(0.5),
+                                .withValues(alpha: 0.5),
                           ),
                     ),
                   ),
@@ -439,7 +434,7 @@ class _ActionLogTile extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.greenDeep.withOpacity(0.07),
+          color: AppTheme.greenDeep.withValues(alpha: 0.07),
           width: 0.5,
         ),
       ),
@@ -458,19 +453,14 @@ class _ActionLogTile extends StatelessWidget {
         subtitle: Text(
           'Zone X:$zoneX   ${(confidence * 100).toStringAsFixed(0)}% confidence',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withOpacity(0.5),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
         ),
         trailing: Text(
           _relativeTime(timestamp),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withOpacity(0.45),
+                color:
+                    Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45),
                 fontSize: 11,
               ),
         ),

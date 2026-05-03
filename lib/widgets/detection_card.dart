@@ -27,6 +27,7 @@ class DetectionCard extends StatelessWidget {
     }
   }
 
+  @override
   Widget build(BuildContext context) {
     return StreamBuilder<Map<String, dynamic>>(
       stream: FirebaseService.latestDetection,
@@ -43,7 +44,7 @@ class DetectionCard extends StatelessWidget {
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+              color: Theme.of(context).colorScheme.outline.withValues(alpha:0.2),
               width: 0.5,
             ),
           ),
@@ -56,7 +57,7 @@ class DetectionCard extends StatelessWidget {
                   fontSize: 12,
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
+                  ).colorScheme.onSurface.withValues(alpha:0.6),
                 ),
               ),
               const SizedBox(height: 12),
@@ -97,7 +98,7 @@ class DetectionCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
                         value: confidence,
-                        backgroundColor: confColor.withOpacity(0.15),
+                        backgroundColor: confColor.withValues(alpha:0.15),
                         valueColor: AlwaysStoppedAnimation<Color>(confColor),
                         minHeight: 6,
                       ),

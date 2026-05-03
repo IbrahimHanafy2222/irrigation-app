@@ -18,7 +18,7 @@ class ModeToggleCard extends StatelessWidget {
         color: AppTheme.greenPale,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppTheme.greenDeep.withOpacity(0.07),
+          color: AppTheme.greenDeep.withValues(alpha:0.07),
           width: 0.5,
         ),
       ),

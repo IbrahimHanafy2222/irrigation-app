@@ -26,6 +26,7 @@ class StatusBadge extends StatelessWidget {
     }
   }
 
+  @override
   Widget build(BuildContext context) {
     return StreamBuilder<String>(
       stream: FirebaseService.systemState,
@@ -35,9 +36,9 @@ class StatusBadge extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.12),
+            color: color.withValues(alpha:0.12),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color.withOpacity(0.4), width: 0.5),
+            border: Border.all(color: color.withValues(alpha:0.4), width: 0.5),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
