@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'firebase_service.dart';
 import '../models/protocol_definition.dart';
 import '../utils/app_logger.dart';
@@ -23,6 +24,7 @@ class NotificationService {
 
   static Future<void> initialize() async {
     if (!kIsWeb) {
+      await Permission.notification.request();
       const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
       await _notif.initialize(const InitializationSettings(android: androidSettings));
       await _notif

@@ -42,7 +42,7 @@
         ),
         localeId: localeId,
         listenFor: const Duration(seconds: 10),
-        pauseFor: const Duration(seconds: 2),
+        pauseFor: const Duration(seconds: 5),
         listenOptions: SpeechListenOptions(
           cancelOnError: true,
           partialResults: false,

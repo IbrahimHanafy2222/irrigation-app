@@ -82,8 +82,8 @@ class _SttMicButtonState extends State<SttMicButton> {
         if (_feedback.isNotEmpty)
           Container(
             margin: const EdgeInsets.only(bottom: 8),
-            constraints: const BoxConstraints(maxWidth: 240),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            constraints: const BoxConstraints(maxWidth: 300),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.black87,
               borderRadius: BorderRadius.circular(8),
@@ -91,7 +91,7 @@ class _SttMicButtonState extends State<SttMicButton> {
             child: Text(
               _feedback,
               style: const TextStyle(color: Colors.white, fontSize: 13),
-              overflow: TextOverflow.ellipsis,
+              softWrap: true,
             ),
           ),
         GestureDetector(
