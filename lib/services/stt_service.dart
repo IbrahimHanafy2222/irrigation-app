@@ -1,5 +1,6 @@
   import 'package:permission_handler/permission_handler.dart';
   import 'package:speech_to_text/speech_to_text.dart';
+  import '../utils/app_logger.dart';
 
   class SttService {
     static final SpeechToText _speech = SpeechToText();
@@ -10,18 +11,18 @@
       // Step 1: ask for mic permission
       final status = await Permission.microphone.request();
       if (!status.isGranted) {
-        print('Mic permission denied — STT will not work');
+        log.d('Mic permission denied — STT will not work');
         return false;
       }
-      print('Mic permission granted');
+      log.d('Mic permission granted');
 
       // Step 2: initialize the STT engine
       _initialized = await _speech.initialize(
-        onStatus: (status) => print('STT status: $status'),
-        onError: (error) => print('STT error: $error'),
+        onStatus: (status) => log.d('STT status: $status'),
+        onError: (error) => log.d('STT error: $error'),
       );
 
-      print(_initialized ? 'STT ready' : 'STT not available on this device');
+      log.d(_initialized ? 'STT ready' : 'STT not available on this device');
       return _initialized;
     }
 
@@ -40,12 +41,12 @@
           result.finalResult,
         ),
         localeId: localeId,
-        listenFor: const Duration(seconds: 30),
-        pauseFor: const Duration(seconds: 8),
+        listenFor: const Duration(seconds: 10),
+        pauseFor: const Duration(seconds: 2),
         listenOptions: SpeechListenOptions(
-          cancelOnError: false,
-          partialResults: true,
-          autoPunctuation: true,
+          cancelOnError: true,
+          partialResults: false,
+          autoPunctuation: false,
         ),
       );
     }
