@@ -1,70 +1,149 @@
-# Irrigation App
+﻿# Smart Precision Irrigation System — Flutter App
 
-A Flutter mobile app for a smart irrigation system with AI-powered plant disease monitoring, real-time sensor data, and remote hardware control via Firebase.
+Mobile control interface for an AI-based smart irrigation system. Communicates bidirectionally with Firebase Realtime Database to monitor sensors, control actuators, and receive AI plant health detections from a Raspberry Pi vision system.
+
+**Course:** CIE-349/408
+
+---
+
+## System Architecture
+
+```
+Flutter App <-> Firebase RTDB <-> ESP8266 <-> PIC16F877A <-> Actuators
+                     ^
+              Raspberry Pi (AI vision)
+```
+
+Round-trip latency target: < 3 seconds from button tap to actuator response.
 
 ---
 
 ## Features
 
-- **Live sensor dashboard** — soil moisture, temperature, water level, current draw (Firebase RTDB streams)
-- **AI plant monitoring** — disease detection (Healthy / Early Blight / Late Blight / Pest / Nutrient Deficiency) with confidence scores and camera images
-- **Remote actuator control** — pump toggle, emergency stop, gantry XY positioning
-- **AI irrigation protocol** — automatically triggered zone-targeted watering based on detection class
-- **Alert history** — severity-sorted log of system events
-- **Voice input** — Speech-to-Text integration for hands-free control
-- **Material 3 UI** — green-palette theme with DM Serif Display / DM Sans fonts
+- **Live Dashboard** — 4 sensor cards with real-time sparkline history charts
+- **Manual Controls** — pump on/off, gantry X-axis, emergency stop (requires MANUAL mode)
+- **AI Monitor** — disease detection feed, active protocol, grace period countdown, action log
+- **Voice Commands** — hands-free control via Speech-to-Text
+- **Push Notifications** — FCM alerts on disease detection or safety events
+- **Alerts History** — severity-coded system alert log
+- **Offline Banner** — detects Firebase connection loss
 
 ---
 
-## Architecture
+## Voice Commands
 
-```
-Hardware / Edge device
-  → writes sensor data to Firebase RTDB
-    → Flutter app reads via real-time streams
-      → user commands written back to Firebase
-        → hardware reads and executes
-```
+| Say | Action |
+|-----|--------|
+| "pump on" / "turn on pump" / "start pump" | Pump ON |
+| "pump off" / "turn off pump" / "stop pump" | Pump OFF |
+| "emergency stop" / "stop everything" / "stop all" | Emergency stop |
+| "cancel AI" / "cancel protocol" / "abort protocol" | Cancel AI protocol |
+| "gantry x [N]" / "move gantry to x [N]" | Move gantry 0-400 mm |
+| "water for [N] seconds" | Irrigate for N seconds (10-600) |
 
-### Firebase RTDB paths
+---
+
+## Firebase RTDB Schema
 
 | Path | Direction | Description |
 |------|-----------|-------------|
-| `sensors/soil_moisture` | read | % moisture |
-| `sensors/temperature` | read | °C |
-| `sensors/water_level` | read | % level |
-| `sensors/current` | read | Amps draw |
-| `status/system_state` | read | `NORMAL` / `WARNING` / `FAULT` |
-| `status/pump` | read | `ON` / `OFF` |
-| `status/gantry_x`, `gantry_y` | read | gantry position |
-| `ai/latest_detection` | read | `{class, confidence, image_url}` |
-| `ai/active_protocol` | read | `{status, zone_x, zone_y, grace_remaining}` |
-| `alerts/history` | read | list of `{severity, message, timestamp}` |
-| `commands/pump` | **write** | `{state, timestamp, source}` |
-| `commands/emergency_stop` | **write** | `true` |
-| `commands/gantry_move` | **write** | `{x, y, timestamp}` |
-| `commands/cancel_ai_protocol` | **write** | `true` |
+| `sensors/soil_moisture` | read | Float 0-100% |
+| `sensors/temperature` | read | Float degC |
+| `sensors/water_level` | read | Float 0-100% |
+| `sensors/current` | read | Float Amps |
+| `status/system_state` | read | NORMAL / WARNING / FAULT |
+| `status/pump` | read | ON / OFF |
+| `status/gantry_x` | read | Int 0-400 mm |
+| `status/mode` | read/write | AUTOMATIC / MANUAL |
+| `ai/latest_detection` | read | {class, confidence, image_url, timestamp} |
+| `ai/active_protocol` | read | {status, zone_x, grace_remaining, triggered_class} |
+| `ai/action_log` | read | list of detection+action records |
+| `commands/pump` | write | {state, timestamp, source} |
+| `commands/emergency_stop` | write | true |
+| `commands/gantry_move` | write | {x, timestamp, source} |
+| `commands/irrigation_cycle` | write | {duration, timestamp, source} |
+| `commands/cancel_ai_protocol` | write | true |
+| `alerts/history` | read | list of {severity, message, timestamp} |
 
 ---
 
-## Screens
+## AI Plant Classes
 
-| Tab | Screen | Purpose |
-|-----|--------|---------|
-| Home | `HomeScreen` | Hero landing, quick stats, how-it-works cards |
-| Dashboard | `DashboardScreen` | Live sensor grid + AI detection card |
-| Controls | `ActuatorScreen` | Pump toggle, emergency stop, gantry test move |
-| AI Monitor | `AiMonitorScreen` | Latest detection image + active protocol status |
-| Alerts | `AlertsScreen` | Alert history sorted by timestamp |
+| Class | Protocol |
+|-------|----------|
+| Healthy | No action |
+| Early_Blight | Irrigate 30s |
+| Late_Blight | Irrigate 60s + alert |
+| Pest | Irrigate 45s + alert |
+| Nutrient_Deficiency | Irrigate 20s |
+
+---
+
+## Tech Stack
+
+| Concern | Package |
+|---------|---------|
+| Firebase RTDB | firebase_database ^12.2.0 |
+| Firebase Messaging | firebase_messaging ^16.1.3 |
+| Push notifications | flutter_local_notifications ^17.0.0 |
+| Speech-to-Text | speech_to_text ^7.3.0 |
+| Charts | fl_chart ^0.68.0 |
+| Permissions | permission_handler ^11.0.0 |
+
+---
+
+## Project Structure
+
+```
+lib/
+├── main.dart
+├── firebase_options.dart        # Generated by FlutterFire CLI (gitignored)
+├── theme/app_theme.dart
+├── services/
+│   ├── firebase_service.dart    # All Firebase streams + write helpers
+│   ├── stt_service.dart
+│   └── fcm_service.dart
+├── utils/command_parser.dart    # Voice text -> Firebase dispatch
+├── models/protocol_definition.dart
+├── screens/
+│   ├── home_screen.dart
+│   ├── dashboard_screen.dart
+│   ├── actuator_screen.dart
+│   ├── ai_monitor_screen.dart
+│   └── alerts_screen.dart
+└── widgets/
+    ├── sensor_card.dart         # Live value + sparkline chart
+    ├── status_badge.dart
+    ├── detection_card.dart
+    ├── mode_toggle_card.dart
+    ├── stt_mic_button.dart      # Voice command FAB
+    └── app_logo.dart
+```
 
 ---
 
 ## Setup
 
-1. **Flutter** — requires Flutter SDK (stable channel)
-2. **Firebase** — run `flutterfire configure` to generate `lib/firebase_options.dart` (gitignored)
-3. **Android** — microphone permission (`RECORD_AUDIO`) is declared in the manifest
-4. **Run:**
+### 1. Firebase
+
+```bash
+dart pub global activate flutterfire_cli
+flutterfire configure --project=YOUR_PROJECT_ID
+```
+
+Generates `lib/firebase_options.dart` (gitignored — must exist to build).
+
+### 2. Android permissions
+
+Add inside `<manifest>` in `android/app/src/main/AndroidManifest.xml`:
+
+```xml
+<uses-permission android:name="android.permission.INTERNET"/>
+<uses-permission android:name="android.permission.RECORD_AUDIO"/>
+<uses-permission android:name="com.google.android.c2dm.permission.RECEIVE"/>
+```
+
+### 3. Run
 
 ```bash
 flutter pub get
@@ -73,33 +152,30 @@ flutter run
 
 ---
 
-## Build
+## Testing Without Hardware
 
-```bash
-flutter build apk      # Android
-flutter build web      # Web
+Simulate data via Firebase Console:
+
+```json
+// /sensors/
+{ "soil_moisture": 45.2, "temperature": 28.5, "water_level": 72.0, "current": 1.3 }
+
+// /ai/latest_detection
+{ "class": "Early_Blight", "confidence": 0.87, "zone_x": 128, "timestamp": "2026-04-28T10:30:00Z" }
+
+// /ai/active_protocol
+{ "status": "executing", "zone_x": 128, "grace_remaining": 25, "triggered_class": "Early_Blight" }
+
+// /status/system_state
+"FAULT"
 ```
+
+FCM test: Firebase Console -> Cloud Messaging -> send to topic `ai_detections`.
 
 ---
 
-## Progress
+## Build
 
-### Done
-- [x] Firebase Realtime Database integration (all sensor + status streams)
-- [x] 5-tab navigation shell (`MainNavigation`)
-- [x] `HomeScreen` — static landing page with hero and quick-stats
-- [x] `DashboardScreen` — live `SensorCard` grid + `DetectionCard` + `StatusBadge`
-- [x] `ActuatorScreen` — pump toggle, emergency stop, gantry move commands
-- [x] `AiMonitorScreen` — detection image viewer + active protocol display
-- [x] `AlertsScreen` — timestamped alert history
-- [x] `SttTestScreen` — standalone voice input debug screen
-- [x] Material 3 theme with custom green palette and DM fonts
-- [x] Speech-to-Text service singleton
-
-### In Progress / Planned
-- [ ] Offline mode / connection-loss handling
-- [ ] Push notifications for FAULT state
-- [ ] Historical sensor charts (time-series graphs)
-- [ ] Multi-zone irrigation scheduling UI
-- [ ] iOS build & TestFlight distribution
-- [ ] Unit + widget test coverage
+```bash
+flutter build apk --release
+```

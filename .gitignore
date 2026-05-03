@@ -1,5 +1,28 @@
-# Claude Code local settings (may contain tokens)
+# AI assistant local files
 .claude/
+docs/superpowers/
+PLAN.md
+plan.md
+CLAUDE.md
+
+# Kotlin compiler artifacts
+**/.kotlin/
+
+# Non-target platforms (Android + Web only)
+ios/
+macos/
+linux/
+windows/
+
+# IDE / tool files
+.vscode/
+.metadata
+devtools_options.yaml
+
+# Unused font variants
+fonts/DM_Sans/static/
+fonts/DM_Sans/OFL.txt
+fonts/DM_Sans/README.txt
 
 # Miscellaneous
 *.class
@@ -48,3 +71,5 @@ app.*.map.json
 /android/app/release
 
 .fake
+
+lib/firebase_options.dart
