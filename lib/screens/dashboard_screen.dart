@@ -29,7 +29,8 @@ class DashboardScreen extends StatelessWidget {
               return Container(
                 width: double.infinity,
                 color: Colors.amber.shade100,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
                     const Icon(Icons.wifi_off, size: 16, color: Colors.orange),
@@ -50,99 +51,105 @@ class DashboardScreen extends StatelessWidget {
             child: RefreshIndicator(
               onRefresh: () async {},
               child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            // Section label
-            Text(
-              'Live sensors',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.5),
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            // 2x2 sensor card grid
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 1.0,
-              children: [
-                SensorCard(
-                  label: 'Soil moisture',
-                  stream: FirebaseService.soilMoisture,
-                  unit: '%',
-                  icon: Icons.water_drop_outlined,
-                  iconColor: Colors.blue,
-                ),
-                SensorCard(
-                  label: 'Temperature',
-                  stream: FirebaseService.temperature,
-                  unit: '°C',
-                  icon: Icons.thermostat_outlined,
-                  iconColor: Colors.orange,
-                ),
-                SensorCard(
-                  label: 'Water level',
-                  stream: FirebaseService.waterLevel,
-                  unit: '%',
-                  icon: Icons.water_outlined,
-                  iconColor: Colors.teal,
-                ),
-                SensorCard(
-                  label: 'Current draw',
-                  stream: FirebaseService.current,
-                  unit: 'A',
-                  icon: Icons.bolt_outlined,
-                  iconColor: Colors.amber,
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-
-            // AI Detection section
-            Text(
-              'AI detection',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.5),
-              ),
-            ),
-            const SizedBox(height: 10),
-            const DetectionCard(),
-
-            const SizedBox(height: 24),
-
-            // Last updated indicator
-            StreamBuilder<double>(
-              stream: FirebaseService.temperature,
-              builder: (context, snapshot) {
-                return Text(
-                  snapshot.connectionState == ConnectionState.waiting
-                      ? 'Connecting to Firebase...'
-                      : 'Live — updates every 5s',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha:0.4),
+                padding: const EdgeInsets.all(16),
+                children: [
+                  // Section label
+                  Text(
+                    'Live sensors',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.5),
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                );
-              },
-            ),
-          ],
-          ),   // ListView
-            ),     // RefreshIndicator
-          ),       // Expanded
-        ],         // Column children
-      ),           // Column
+                  const SizedBox(height: 10),
+
+                  // 2x2 sensor card grid
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 1.0,
+                    children: [
+                      SensorCard(
+                        label: 'Humidity',
+                        stream: FirebaseService.humidity,
+                        unit: '%',
+                        icon: Icons.water_drop_outlined,
+                        iconColor: Colors.blue,
+                      ),
+                      SensorCard(
+                        label: 'Temperature',
+                        stream: FirebaseService.temperature,
+                        unit: '°C',
+                        icon: Icons.thermostat_outlined,
+                        iconColor: Colors.orange,
+                      ),
+                      SensorCard(
+                        label: 'Soil Moisture',
+                        stream: FirebaseService.soilMoisture,
+                        unit: '%',
+                        icon: Icons.water_drop_outlined,
+                        iconColor: Colors.teal,
+                      ),
+                      SensorCard(
+                        label: 'Current draw',
+                        stream: FirebaseService.current,
+                        unit: 'A',
+                        icon: Icons.bolt_outlined,
+                        iconColor: Colors.amber,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // AI Detection section
+                  Text(
+                    'AI detection',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.5),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const DetectionCard(),
+
+                  const SizedBox(height: 24),
+
+                  // Last updated indicator
+                  StreamBuilder<double>(
+                    stream: FirebaseService.temperature,
+                    builder: (context, snapshot) {
+                      return Text(
+                        snapshot.connectionState == ConnectionState.waiting
+                            ? 'Connecting to Firebase...'
+                            : 'Live — updates every 5s',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.4),
+                        ),
+                        textAlign: TextAlign.center,
+                      );
+                    },
+                  ),
+                ],
+              ), // ListView
+            ), // RefreshIndicator
+          ), // Expanded
+        ], // Column children
+      ), // Column
     );
   }
 }

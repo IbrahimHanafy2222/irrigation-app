@@ -5,17 +5,17 @@ class FirebaseService {
 
 // Sensor streams — each returns a live Stream that updates automatically
   static Stream<double> get soilMoisture => _db
-      .ref('sensors/soil_moisture')
+      .ref('sensors/soil_moisture_pct')
+      .onValue
+      .map((e) => (e.snapshot.value as num?)?.toDouble() ?? 0.0);
+
+  static Stream<double> get humidity => _db
+      .ref('sensors/humidity')
       .onValue
       .map((e) => (e.snapshot.value as num?)?.toDouble() ?? 0.0);
 
   static Stream<double> get temperature => _db
       .ref('sensors/temperature')
-      .onValue
-      .map((e) => (e.snapshot.value as num?)?.toDouble() ?? 0.0);
-
-  static Stream<double> get waterLevel => _db
-      .ref('sensors/water_level')
       .onValue
       .map((e) => (e.snapshot.value as num?)?.toDouble() ?? 0.0);
 
